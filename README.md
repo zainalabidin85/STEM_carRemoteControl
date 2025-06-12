@@ -44,7 +44,7 @@ The HTML UI served by the ESP32 features:
 - Instant feedback via debug panel
 - Fullscreen mode for immersive RC experience
 
-📸 *Replace this with a screenshot in your GitHub repo:*
+📸
 
 ```
 ![Web UI Screenshot](assets/screenshot.png)
