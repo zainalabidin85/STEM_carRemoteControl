@@ -46,9 +46,9 @@ The HTML UI served by the ESP32 features:
 
 📸
 
-```
+
 ![Web UI Screenshot](assets/screenshot.png)
-```
+
 
 ## 🧠 Memory Functionality
 
