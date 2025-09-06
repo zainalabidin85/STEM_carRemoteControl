@@ -7,8 +7,14 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 ```
 .
-├── ESP32_RCWIFI_hold_duration_analog_2.ino  # Main Arduino sketch for ESP32 motor control logic
+├── ESP32_RCWIFI.ino                         # Main Arduino sketch for ESP32 motor control logic
 ├── html_page.h                              # Embedded HTML/JS served by ESP32
+└── README.md
+
+or
+
+├── ESP32_RCWIFI_UPDATED.ino                 # Arduino sketch with hardware of JSN-SRT04 for obstacle detection
+├── html_page1.h                             # HTML/JS served by ESP32
 └── README.md
 ```
 
@@ -30,6 +36,7 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 - 4 DC motors and chassis platform
 - Power supply (e.g., Li-ion or LiPo battery)
 - Jumper wires, basic soldering or breadboard setup
+- JSN-SRT04 Ultrasonic Sensor (optional)
 
 ## 🔧 Software Requirements
 
