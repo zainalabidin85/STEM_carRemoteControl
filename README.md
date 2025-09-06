@@ -13,6 +13,7 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 or
 
+.
 ├── ESP32_RCWIFI_UPDATED.ino                 # Arduino sketch with hardware of JSN-SRT04 for obstacle detection
 ├── html_page1.h                             # HTML/JS served by ESP32
 └── README.md
@@ -26,6 +27,7 @@ or
   - Speed adjustment via slider (0–255)
   - Motion memory recording and replay
   - Fullscreen mobile mode
+- Obstacle detection (sketch faetured with JSN-SRT04 sensor)
 - Hold-duration controls via mouse and touch events
 - Scrollable debug and movement log area
 
@@ -68,7 +70,7 @@ This allows replaying previously driven routes manually.
 
 ## 🕹️ Getting Started
 
-1. Upload `ESP32_RCWIFI_hold_duration_analog_2.ino` via Arduino IDE
+1. Upload `ESP32_RCWIFI.ino` via Arduino IDE
 2. Connect to the ESP32’s WiFi (SSID: `RC_Car_AP`)
 3. Open browser and navigate to `http://192.168.4.1`
 4. Use the control buttons and sliders
