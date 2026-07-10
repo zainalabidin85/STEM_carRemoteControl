@@ -7,8 +7,15 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 ```
 .
-├── ESP32_RCWIFI.ino                         # Single Arduino sketch: motor control + optional obstacle detection
-├── html_page.h                              # Embedded HTML/JS served by ESP32 (touch joystick UI)
+├── ESP32_RCWIFI.ino                         # Single Arduino sketch: motor control + arcade drive mixing + optional obstacle detection
+├── html_page.h                              # Embedded HTML/JS served by ESP32 (dual-joystick landscape UI)
+├── firmware/                                # Prebuilt, ready-to-flash binaries (see below)
+│   ├── merged.bin
+│   ├── bootloader.bin
+│   ├── partitions.bin
+│   ├── firmware.bin
+│   └── flash.sh
+├── assets/                                  # Screenshots etc.
 └── README.md
 ```
 
@@ -38,17 +45,19 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 ## 🔧 Software Requirements
 
-- Arduino IDE with ESP32 board package
+- Arduino IDE with ESP32 board package, **or** PlatformIO (`platformio.org`) — both build the same sketch
 - No additional libraries needed (uses native `WiFi.h` and `WebServer.h`)
+- `esptool` if flashing the prebuilt binaries directly instead of building from source
 
 ## 🌐 Web UI Preview
 
 The HTML UI served by the ESP32 features:
-- Dark, professional dashboard design with a draggable virtual joystick
-- Responsive layout for phone/tablet/desktop
+- Dark, professional dashboard design, forced landscape orientation (portrait shows a "rotate your phone" prompt)
+- Dual on-screen joysticks: left stick controls throttle (forward/reverse), right stick controls steering (left/right) — both blend together in real time for actual steer-while-driving control
+- Responsive layout tuned for phone/tablet landscape use
 - JavaScript-based `fetch()` API for backend communication
 - Instant feedback via debug panel
-- Fullscreen mode for immersive RC experience
+- Verified working on real ESP32 hardware ✅
 
 📸
 
