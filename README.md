@@ -7,28 +7,24 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 ```
 .
-├── ESP32_RCWIFI.ino                         # Main Arduino sketch for ESP32 motor control logic
-├── html_page.h                              # Embedded HTML/JS served by ESP32
-└── README.md
-
-or
-
-.
-├── ESP32_RCWIFI_UPDATED.ino                 # Arduino sketch with hardware of JSN-SRT04 for obstacle detection
-├── html_page1.h                             # HTML/JS served by ESP32
+├── ESP32_RCWIFI.ino                         # Single Arduino sketch: motor control + optional obstacle detection
+├── html_page.h                              # Embedded HTML/JS served by ESP32 (touch joystick UI)
 └── README.md
 ```
 
 ## 🚀 Features
 
-- ESP32-powered standalone WiFi Access Point (`RC_Car_AP`)
-- Web-based dashboard for:
-  - Movement control (Forward, Reverse, Left, Right, Stop)
-  - Speed adjustment via slider (0–255)
-  - Motion memory recording and replay
-  - Fullscreen mobile mode
-- Obstacle detection (sketch faetured with JSN-SRT04 sensor)
-- Hold-duration controls via mouse and touch events
+- ESP32-powered standalone WiFi Access Point (`rc_UNIMAP`)
+- Landscape-only dual-joystick dashboard for phone/tablet control:
+  - Left stick: throttle (forward/reverse)
+  - Right stick: steering (left/right)
+  - Both sticks blend in real time on the ESP32 into true differential-drive motor mixing (arcade-style), so you can steer while moving
+  - Portrait mode shows a "rotate your phone" prompt instead of the controls
+- Max speed cap via slider (40–255), scaled by joystick deflection
+- Motion memory recording and smart single/loop replay (blended drive is approximated to the closest discrete direction for playback)
+- Fullscreen mobile mode
+- Obstacle detection during replay (JSN-SR04T ultrasonic sensor); safe to leave unwired — readings simply become "no obstacle" if the sensor isn't connected
+- Hold/drag-duration controls via pointer events (mouse + touch)
 - Scrollable debug and movement log area
 
 ## 🛠 Hardware Requirements
@@ -38,7 +34,7 @@ or
 - 4 DC motors and chassis platform
 - Power supply (e.g., Li-ion or LiPo battery)
 - Jumper wires, basic soldering or breadboard setup
-- JSN-SRT04 Ultrasonic Sensor (optional)
+- JSN-SR04T Ultrasonic Sensor (optional, enables obstacle-pause during replay)
 
 ## 🔧 Software Requirements
 
@@ -48,6 +44,7 @@ or
 ## 🌐 Web UI Preview
 
 The HTML UI served by the ESP32 features:
+- Dark, professional dashboard design with a draggable virtual joystick
 - Responsive layout for phone/tablet/desktop
 - JavaScript-based `fetch()` API for backend communication
 - Instant feedback via debug panel
@@ -70,10 +67,25 @@ This allows replaying previously driven routes manually.
 
 ## 🕹️ Getting Started
 
-1. Upload `ESP32_RCWIFI.ino` via Arduino IDE
-2. Connect to the ESP32’s WiFi (SSID: `RC_Car_AP`)
+1. Upload `ESP32_RCWIFI.ino` via Arduino IDE, **or** flash the prebuilt binaries in [`firmware/`](firmware/) directly with `esptool` (no Arduino IDE needed) — run `firmware/flash.sh /dev/ttyUSB0` (adjust the port for your OS)
+2. Connect to the ESP32’s WiFi (SSID: `rc_UNIMAP`)
 3. Open browser and navigate to `http://192.168.4.1`
-4. Use the control buttons and sliders
+4. Drag the on-screen joystick to drive, set max speed, and use record/replay
+
+## 📦 Prebuilt Firmware
+
+The [`firmware/`](firmware/) folder contains ready-to-flash binaries built from the current sketch (PlatformIO, `esp32dev` board):
+
+- `merged.bin` — bootloader + partition table + app combined into one image, flash at `0x0`. **Use this one.**
+- `bootloader.bin` @ `0x1000`, `partitions.bin` @ `0x8000`, `firmware.bin` @ `0x10000` — the same three pieces kept separately, in case a tool needs them individually.
+
+Flash with `firmware/flash.sh [serial-port]`, or manually:
+
+```
+esptool --chip esp32 --port <PORT> --baud 460800 write_flash -z 0x0 firmware/merged.bin
+```
+
+Rebuild after editing the sketch with PlatformIO (`pio run`) or the Arduino IDE — these binaries aren't auto-regenerated.
 
 ## 🎓 Educational Context
 
