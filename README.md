@@ -22,17 +22,20 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 ## 🚀 Features
 
 - ESP32-powered standalone WiFi Access Point (`rc_UNIMAP`)
-- Landscape-only dual-joystick dashboard for phone/tablet control:
-  - Left stick: throttle (forward/reverse)
-  - Right stick: steering (left/right)
-  - Both sticks blend in real time on the ESP32 into true differential-drive motor mixing (arcade-style), so you can steer while moving
-  - Portrait mode shows a "rotate your phone" prompt instead of the controls
-- Max speed cap via slider (40–255), scaled by joystick deflection
-- Motion memory recording and smart single/loop replay (blended drive is approximated to the closest discrete direction for playback)
-- Fullscreen mobile mode
+- Landscape-only dual-lever dashboard for phone/tablet control:
+  - Left lever: throttle (forward/reverse)
+  - Right lever: steering (left/right)
+  - Both levers blend in real time on the ESP32 into true differential-drive motor mixing (arcade-style), so you can steer while moving
+  - Portrait mode shows a "turn your phone sideways" prompt instead of the controls
+- Speed limit slider (PWM 40–255), scaled by lever deflection
+- Route memory: record a drive, then play it back once or on a loop (blended drive is approximated to the closest discrete direction for playback)
 - Obstacle detection during replay (JSN-SR04T ultrasonic sensor); safe to leave unwired — readings simply become "no obstacle" if the sensor isn't connected
-- Hold/drag-duration controls via pointer events (mouse + touch)
-- Scrollable debug and movement log area
+- Safety:
+  - **STOP** halts the motors and cancels any running replay
+  - Moving a lever during a replay takes over manual control
+  - Link failsafe: if no drive command arrives for 500 ms while driving (phone out of range, app closed, WiFi dropped), the car stops
+  - The page also stops the car when you switch away from it or lock the phone
+- Keyboard driving on a laptop: W/A/S/D or arrow keys, Space to stop
 
 ## 🛠 Hardware Requirements
 
@@ -51,15 +54,13 @@ This project enables remote control of a 4-wheel car using an ESP32 microcontrol
 
 ## 🌐 Web UI Preview
 
-The HTML UI served by the ESP32 features:
-- Dark, professional dashboard design, forced landscape orientation (portrait shows a "rotate your phone" prompt)
-- Dual on-screen joysticks: left stick controls throttle (forward/reverse), right stick controls steering (left/right) — both blend together in real time for actual steer-while-driving control
-- Responsive layout tuned for phone/tablet landscape use
-- JavaScript-based `fetch()` API for backend communication
-- Instant feedback via debug panel
-- Verified working on real ESP32 hardware ✅
+The page served by the ESP32 is a single self-contained HTML file (`html_page.h`) with no external fonts or scripts, so it works on the car's offline access point.
 
-📸
+- **Levers:** touch anywhere in the left or right third of the screen and slide. Where your thumb lands counts as zero, so touching never makes the car jump.
+- **Motor output:** live left/right wheel PWM, computed with the same mixing as `driveArcade()` in the sketch. Useful for showing students how throttle and steering combine.
+- **Status bar:** current mode (Manual, Recording, Replay · step N, Obstacle · paused) and the round-trip time to the car, or "No link" when it stops answering.
+- **Replay log:** the menu button opens the step-by-step log from `/log`.
+- **Full screen:** the corner button enters full screen and locks landscape where the browser allows it.
 
 
 ![Web UI Screenshot](assets/screenshot.jpeg)
@@ -67,23 +68,25 @@ The HTML UI served by the ESP32 features:
 
 ## 🧠 Memory Functionality
 
-- **Memory Start**: Begins recording directional commands
-- **Memory Stop**: Ends recording session
-- **Replay**: Replays recorded motion in sequence
-- **Memory Clear**: Deletes saved motion log
+- **Record**: starts recording your driving; the button shows the elapsed time. Tap again to save the route (up to 200 steps).
+- **Play**: drives the saved route once. If you're still recording, recording stops first.
+- **Loop**: plays the route again each time it finishes, until you turn Loop off or press STOP.
+- **Clear** (bin icon): deletes the saved route. Tap twice to confirm.
 
-This allows replaying previously driven routes manually.
+During playback the car pauses while the ultrasonic sensor sees an obstacle closer than 20 cm, and resumes when the way is clear. STOP or moving a lever ends playback.
 
 ## 🕹️ Getting Started
 
 1. Upload `ESP32_RCWIFI.ino` via Arduino IDE, **or** flash the prebuilt binaries in [`firmware/`](firmware/) directly with `esptool` (no Arduino IDE needed) — run `firmware/flash.sh /dev/ttyUSB0` (adjust the port for your OS)
 2. Connect to the ESP32’s WiFi (SSID: `rc_UNIMAP`)
 3. Open browser and navigate to `http://192.168.4.1`
-4. Drag the on-screen joystick to drive, set max speed, and use record/replay
+4. Turn the phone sideways, slide the left lever for throttle and the right lever for steering, set the speed limit, and use Record / Play / Loop
 
 ## 📦 Prebuilt Firmware
 
-The [`firmware/`](firmware/) folder contains ready-to-flash binaries built from the current sketch (PlatformIO, `esp32dev` board):
+The [`firmware/`](firmware/) folder contains ready-to-flash binaries (PlatformIO, `esp32dev` board):
+
+> ⚠️ These binaries were built before the October 2026 UI redesign and link failsafe. Build from source to get the current version until they are regenerated.
 
 - `merged.bin` — bootloader + partition table + app combined into one image, flash at `0x0`. **Use this one.**
 - `bootloader.bin` @ `0x1000`, `partitions.bin` @ `0x8000`, `firmware.bin` @ `0x10000` — the same three pieces kept separately, in case a tool needs them individually.
