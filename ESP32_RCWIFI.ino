@@ -51,6 +51,14 @@ bool obstacleHold = false;
 uint32_t obstacleStart = 0;
 uint32_t lastObstacleLog = 0;
 
+// --- Link failsafe ---
+// The web UI streams drive packets at ~10 Hz while a stick is off-centre. If
+// they stop arriving (phone out of range, app closed, WiFi dropped) the car
+// stops instead of carrying on with the last command.
+const uint32_t DRIVE_TIMEOUT_MS = 500;
+bool driveActive = false;
+uint32_t lastDriveTime = 0;
+
 // --- Utils ---
 static inline uint32_t nowMs() { return millis(); }
 
@@ -183,6 +191,15 @@ void executeCommand(const Command& cmd) {
   else stopMotors();
 }
 
+// Ends a running replay so loop() stops stepping through the path. Callers
+// decide what the motors do next.
+void cancelReplay(const char* reason) {
+  if (!isReplaying) return;
+  isReplaying = false;
+  obstacleHold = false;
+  replayLog += String(reason) + "\n";
+}
+
 void handleControl() {
   if (!server.hasArg("cmd")) return;
   String cmd = server.arg("cmd");
@@ -197,7 +214,18 @@ void handleControl() {
   if (cmd == "drive" && server.hasArg("throttle") && server.hasArg("steer")) {
     int throttle = server.arg("throttle").toInt();
     int steer = server.arg("steer").toInt();
+    // Moving a stick during replay takes over; idle zero packets are ignored
+    // so they don't stall the replay's motors.
+    if (isReplaying) {
+      if (abs(throttle) <= 10 && abs(steer) <= 10) {
+        server.send(200, "text/plain", "OK");
+        return;
+      }
+      cancelReplay("Replay stopped: manual control.");
+    }
     driveArcade(throttle, steer);
+    driveActive = (throttle != 0 || steer != 0);
+    lastDriveTime = nowMs();
     server.send(200, "text/plain", "OK");
     return;
   }
@@ -235,6 +263,7 @@ void handleControl() {
     return;
   }
   if (cmd == "clear_memory") {
+    if (isReplaying) stopMotors();
     pathIndex = 0;
     isRecording = false;
     isReplaying = false;
@@ -270,6 +299,8 @@ void handleControl() {
 
   if (cmd == "stop") {
     stopMotors();
+    driveActive = false;
+    cancelReplay("Replay stopped.");
     if (isRecording && driveCmd != "" && pathIndex < MAX_RECORDS) {
       recordedPath[pathIndex++] = {driveCmd, nowMs() - driveSegStart, driveSegSpeed};
       driveCmd = "";
@@ -316,6 +347,12 @@ void setup() {
 
 void loop() {
   server.handleClient();
+
+  if (driveActive && nowMs() - lastDriveTime > DRIVE_TIMEOUT_MS) {
+    driveActive = false;
+    driveArcade(0, 0);  // stops motors and closes any open recording segment
+    Serial.println("Failsafe: drive packets lost, motors stopped");
+  }
 
   if (isReplaying && replayIndex < pathIndex) {
     // Check obstacle only in replay mode

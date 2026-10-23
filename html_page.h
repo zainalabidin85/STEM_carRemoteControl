@@ -124,7 +124,6 @@ const char* htmlPage = R"rawliteral(
   .zone.held .zone-head .dir, .zone.engaged .zone-head .dir { color: var(--accent); }
   .readout { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 600; line-height: 1; }
   .readout small { font-size: 14px; color: var(--muted); margin-left: 1px; }
-  .hint { font-size: 11px; color: var(--muted); opacity: .8; }
 
   .lever { --long: clamp(150px, 56vh, 290px); --short: clamp(66px, 17vh, 88px); position: relative; display: flex; align-items: center; gap: 8px; }
   .lever.v { flex-direction: row; }
@@ -255,7 +254,7 @@ const char* htmlPage = R"rawliteral(
   /* Short screens (phones in landscape with browser chrome) */
   @media (max-height: 380px) {
     #app { gap: 6px; padding-block: 6px 6px; }
-    .brand span, .hint { display: none; }
+    .brand span { display: none; }
     .panel { padding: 8px 10px; }
     .panel-head { margin-bottom: 4px; }
     .ticks { display: none; }
@@ -300,7 +299,6 @@ const char* htmlPage = R"rawliteral(
         <div class="scale" id="thrScale"></div>
       </div>
       <div class="readout" id="thrOut">0<small>%</small></div>
-      <div class="hint">Touch anywhere here, slide up or down</div>
     </section>
 
     <section class="center">
@@ -338,7 +336,6 @@ const char* htmlPage = R"rawliteral(
         <div class="scale" id="strScale"></div>
       </div>
       <div class="readout" id="strOut">0<small>%</small></div>
-      <div class="hint">Touch anywhere here, slide left or right</div>
     </section>
   </main>
 </div>
@@ -641,6 +638,7 @@ const char* htmlPage = R"rawliteral(
     }
     if (!lines.length) return { phase: 'none', step: 0 };
     if (/Replay finished/.test(last)) return { phase: 'done', step: step };
+    if (/Replay stopped/.test(last)) return { phase: 'stopped', step: step };
     if (/Obstacle detected/.test(last)) return { phase: 'hold', step: step };
     return { phase: 'running', step: step };
   }
@@ -652,6 +650,7 @@ const char* htmlPage = R"rawliteral(
     else if (r.phase === 'running') { mode = 'replay'; text = (st.loop ? 'Loop' : 'Replay') + ' · step ' + r.step; info = 'Step ' + r.step; }
     else if (st.loop) { mode = 'replay'; text = 'Loop'; }
     else if (r.phase === 'done') { info = 'Finished · ' + r.step + ' steps'; }
+    else if (r.phase === 'stopped') { info = 'Stopped at step ' + r.step; }
     var el = $('mode');
     el.dataset.mode = mode;
     $('modeText').textContent = text;
@@ -663,7 +662,7 @@ const char* htmlPage = R"rawliteral(
     if (!st.log.trim()) { body.textContent = 'No replay yet. Record a route, then press Play.'; return; }
     var esc = function (s) { return s.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
     body.innerHTML = st.log.trim().split('\n').map(function (l) {
-      var cls = /Obstacle detected/.test(l) ? 'ev-ob' : /finished/.test(l) ? 'ev-end' : '';
+      var cls = /Obstacle detected|Replay stopped/.test(l) ? 'ev-ob' : /finished/.test(l) ? 'ev-end' : '';
       return cls ? '<span class="' + cls + '">' + esc(l) + '</span>' : esc(l);
     }).join('\n');
     body.scrollTop = body.scrollHeight;
@@ -677,6 +676,7 @@ const char* htmlPage = R"rawliteral(
         renderLog();
         var now = replayState().phase;
         if (now === 'hold' && prev !== 'hold') { buzz([30, 60, 30]); toast('Obstacle ahead. Car paused.'); }
+        if (now === 'stopped' && prev !== 'stopped') setLoop(false);
       }
       renderMode();
       // Loop: start the next pass once the firmware reports the route finished.
